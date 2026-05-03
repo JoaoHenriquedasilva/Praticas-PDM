@@ -20,6 +20,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -95,6 +96,14 @@ fun LoginPage(modifier: Modifier = Modifier) {
             ) {
                 Text("Limpar")
             }
+        }
+        Spacer(modifier = Modifier.size(16.dp))
+
+        TextButton(onClick = {
+            val intent = Intent(activity, RegisterActivity::class.java)
+            activity.startActivity(intent)
+        }) {
+            Text("Ainda não tem conta? Registre-se")
         }
     }
 }
