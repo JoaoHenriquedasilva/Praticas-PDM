@@ -2,6 +2,7 @@ package com.sistemaestudos
 
 import android.R.attr.enabled
 import android.app.Activity
+import android.content.Intent
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
@@ -80,7 +81,10 @@ fun LoginPage(modifier: Modifier = Modifier) {
         Row(modifier = Modifier.padding(12.dp).fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             Button(
                 onClick = {
-                    Toast.makeText(activity, "Login OK!", Toast.LENGTH_LONG).show()
+                    val intent = Intent(activity, MainActivity::class.java).apply {
+                        flags = Intent.FLAG_ACTIVITY_SINGLE_TOP // Reutiliza a atividade se já estiver aberta
+                    }
+                    activity.startActivity(intent)
                 },
                 enabled = email.isNotEmpty() && password.isNotEmpty()
             ) {
