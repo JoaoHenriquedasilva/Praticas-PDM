@@ -17,6 +17,12 @@ import com.sistemaestudos.ui.nav.BottomNavItem
 import com.sistemaestudos.ui.nav.MainNavHost
 import com.sistemaestudos.ui.theme.SistemaestudosTheme
 import androidx.activity.viewModels
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import com.sistemaestudos.ui.CityDialog
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
+
 class MainActivity : ComponentActivity() {
     private val viewModel: MainViewModel by viewModels()
 
@@ -26,7 +32,13 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             val navController = rememberNavController()
-
+            var showDialog by remember { mutableStateOf(false) }
+            if (showDialog) CityDialog(
+                onDismiss = { showDialog = false },
+                onConfirm = { city ->
+                    if (city.isNotBlank()) viewModel.add(city)
+                    showDialog = false
+                })
             SistemaestudosTheme {
                 Scaffold(
                     topBar = {
@@ -51,7 +63,7 @@ class MainActivity : ComponentActivity() {
                         BottomNavBar(navController = navController, items = items)
                     },
                     floatingActionButton = {
-                        FloatingActionButton(onClick = { /* Ação futura */ }) {
+                        FloatingActionButton(onClick = { showDialog = true }) {
                             Icon(Icons.Default.Add, contentDescription = "Adicionar")
                         }
                     }
