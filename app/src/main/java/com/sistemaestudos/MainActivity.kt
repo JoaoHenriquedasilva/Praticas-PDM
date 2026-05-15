@@ -16,14 +16,15 @@ import com.sistemaestudos.ui.nav.BottomNavBar
 import com.sistemaestudos.ui.nav.BottomNavItem
 import com.sistemaestudos.ui.nav.MainNavHost
 import com.sistemaestudos.ui.theme.SistemaestudosTheme
-
+import androidx.activity.viewModels
 class MainActivity : ComponentActivity() {
+    private val viewModel: MainViewModel by viewModels()
+
     @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-
             val navController = rememberNavController()
 
             SistemaestudosTheme {
@@ -55,9 +56,8 @@ class MainActivity : ComponentActivity() {
                         }
                     }
                 ) { innerPadding ->
-
                     Box(modifier = Modifier.padding(innerPadding)) {
-                        MainNavHost(navController = navController)
+                        MainNavHost(navController = navController, viewModel = viewModel)
                     }
                 }
             }

@@ -34,21 +34,26 @@ import com.sistemaestudos.model.City
 
 import androidx.compose.foundation.lazy.items
 import androidx.compose.ui.platform.LocalContext
+import com.sistemaestudos.MainViewModel
 
 @Composable
-fun ListPage(modifier: Modifier = Modifier) {
-    val cityList = remember { getCities().toMutableStateList() }
-    val activity = LocalContext.current as Activity // Para os Toasts
+fun ListPage(
+    modifier: Modifier = Modifier,
+    viewModel: MainViewModel
+) {
+    val cityList = viewModel.cities // Agora a lista vem do ViewModel
+
+    val activity = LocalContext.current as Activity
+
     LazyColumn(
-        modifier = modifier
-            .fillMaxSize()
-            .padding(8.dp)
+        modifier = modifier.fillMaxSize().padding(all = 8.dp)
     ) {
         items(cityList, key = { it.name }) { city ->
             CityItem(
                 city = city,
                 onClose = {
                     Toast.makeText(activity, "Fechando ${city.name}", Toast.LENGTH_SHORT).show()
+                    viewModel.remove(city)
                 },
                 onClick = {
                     Toast.makeText(activity, "Clicou em ${city.name}", Toast.LENGTH_SHORT).show()
@@ -88,6 +93,3 @@ fun CityItem(
     }
 }
 
-private fun getCities() = List(20) { i ->
-    City(name = "Cidade $i", weather = "Carregando clima...")
-}
