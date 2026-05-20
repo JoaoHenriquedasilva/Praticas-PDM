@@ -12,22 +12,32 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.sp
+import com.google.android.gms.maps.model.BitmapDescriptorFactory
+import com.google.android.gms.maps.model.LatLng
+import com.google.maps.android.compose.GoogleMap
+import com.google.maps.android.compose.Marker
+import com.google.maps.android.compose.rememberCameraPositionState
+import com.google.maps.android.compose.rememberMarkerState
+import com.sistemaestudos.MainViewModel
 
 @Composable
-fun MapPage(modifier: Modifier = Modifier) {
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .background(Color.Gray)
-            .wrapContentSize(Alignment.Center)
+fun MapPage(viewModel: MainViewModel, modifier: Modifier = Modifier) {
+    val camPosState = rememberCameraPositionState ()
+    GoogleMap(
+        modifier = Modifier.fillMaxSize(),
+        cameraPositionState = camPosState,
+        onMapClick = { latLng ->
+            viewModel.add("Cidade@${latLng.latitude}:${latLng.longitude}")
+        }
     ) {
-        Text(
-            text = "Mapa",
-            fontWeight = FontWeight.Bold,
-            color = Color.White,
-            modifier = Modifier.align(Alignment.CenterHorizontally),
-            textAlign = TextAlign.Center,
-            fontSize = 20.sp
-        )
+        viewModel.cities.forEach { city ->
+            if (city.location != null) {
+                Marker(
+                    state = rememberMarkerState(position = city.location),
+                    title = city.name,
+                    snippet = "${city.location}"
+                )
+            }
+        }
     }
 }
