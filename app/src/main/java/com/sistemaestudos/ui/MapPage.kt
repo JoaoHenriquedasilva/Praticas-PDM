@@ -24,6 +24,7 @@ import com.google.maps.android.compose.GoogleMap
 import com.google.maps.android.compose.MapProperties
 import com.google.maps.android.compose.MapUiSettings
 import com.google.maps.android.compose.Marker
+import com.google.maps.android.compose.MarkerState
 import com.google.maps.android.compose.rememberCameraPositionState
 import com.google.maps.android.compose.rememberMarkerState
 import com.sistemaestudos.MainViewModel
@@ -53,7 +54,7 @@ fun MapPage(viewModel: MainViewModel, modifier: Modifier = Modifier) {
         viewModel.cities.forEach { city ->
             if (city.location != null) {
                 Marker(
-                    state = rememberMarkerState(position = city.location),
+                    state = MarkerState(position = city.location),
                     title = city.name,
                     snippet = "${city.location}"
                 )

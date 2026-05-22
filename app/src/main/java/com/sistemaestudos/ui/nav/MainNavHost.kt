@@ -19,6 +19,6 @@ fun MainNavHost(
     NavHost(navController = navController, startDestination = Route.Home) {
         composable<Route.Home> { HomePage(modifier = modifier) }
         composable<Route.List> {ListPage(viewModel = viewModel, modifier = modifier) }
-        composable("map") {MapPage(viewModel = viewModel) }
+        composable<Route.Map> {MapPage(viewModel = viewModel) }
     }
 }

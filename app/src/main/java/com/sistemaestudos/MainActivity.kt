@@ -25,7 +25,9 @@ import androidx.compose.runtime.remember
 import com.sistemaestudos.ui.CityDialog
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
+import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.compose.currentBackStackEntryAsState
+import com.sistemaestudos.ui.nav.Route
 
 class MainActivity : ComponentActivity() {
     private val viewModel: MainViewModel by viewModels()
@@ -38,7 +40,7 @@ class MainActivity : ComponentActivity() {
             val navController = rememberNavController()
             var showDialog by remember { mutableStateOf(false) }
             val currentRoute = navController.currentBackStackEntryAsState()
-            val showButton = currentRoute.value?.destination?.route == "list"
+            val showButton = currentRoute.value?.destination?.hasRoute(Route.List::class) == true
 
             val launcher = rememberLauncherForActivityResult(
                 contract = ActivityResultContracts.RequestPermission(),
