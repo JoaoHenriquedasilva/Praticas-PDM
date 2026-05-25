@@ -1,6 +1,5 @@
 package com.sistemaestudos
 
-import android.R.attr.enabled
 import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
@@ -33,6 +32,7 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.google.firebase.auth.FirebaseAuth
 import com.sistemaestudos.ui.theme.SistemaestudosTheme
 
 class LoginActivity : ComponentActivity() {
@@ -82,14 +82,23 @@ fun LoginPage(modifier: Modifier = Modifier) {
         Row(modifier = Modifier.padding(12.dp).fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             Button(
                 onClick = {
-                    val intent = Intent(activity, MainActivity::class.java).apply {
-                        flags = Intent.FLAG_ACTIVITY_SINGLE_TOP // Reutiliza a atividade se já estiver aberta
-                    }
-                    activity.startActivity(intent)
+                    com.google.firebase.auth.FirebaseAuth.getInstance().signInWithEmailAndPassword(email, password)
+                        .addOnCompleteListener(activity) { task ->
+                            if (task.isSuccessful) {
+                                activity.startActivity(
+                                    android.content.Intent(activity, MainActivity::class.java).setFlags(
+                                        android.content.Intent.FLAG_ACTIVITY_SINGLE_TOP
+                                    )
+                                )
+                                Toast.makeText(activity, "Login OK!", Toast.LENGTH_LONG).show()
+                            } else {
+                                Toast.makeText(activity, "Login FALHOU!", Toast.LENGTH_LONG).show()
+                            }
+                        }
                 },
                 enabled = email.isNotEmpty() && password.isNotEmpty()
             ) {
-                Text("Login")
+                Text("Entrar")
             }
             Button(
                 onClick = { email = ""; password = "" }
