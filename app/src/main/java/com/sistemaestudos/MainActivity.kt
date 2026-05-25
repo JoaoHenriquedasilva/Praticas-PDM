@@ -61,7 +61,6 @@ class MainActivity : ComponentActivity() {
                                 IconButton(
                                     onClick = {
                                         com.google.firebase.auth.FirebaseAuth.getInstance().signOut()
-                                        finish()
                                     }
                                 ) {
                                     Icon(
