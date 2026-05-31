@@ -2,15 +2,21 @@ package com.sistemaestudos
 
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateMapOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.toMutableStateList
 import androidx.lifecycle.ViewModel
 import com.google.android.gms.maps.model.LatLng
 import com.sistemaestudos.model.City
+import com.sistemaestudos.model.User
 
 class MainViewModel : ViewModel() {
     private val _cities = getCities().toMutableStateList()
     val cities: List<City>
         get() = _cities
+
+    private val _user = mutableStateOf<User?> (null)
+    val user : User?
+        get() = _user.value
 
     fun remove(city: City) {
         _cities.remove(city)
