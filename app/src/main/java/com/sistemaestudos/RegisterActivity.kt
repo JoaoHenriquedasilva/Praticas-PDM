@@ -17,6 +17,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.google.firebase.auth.FirebaseAuth
 import com.sistemaestudos.ui.theme.SistemaestudosTheme
+// IMPORTS DOS COMPONENTES DO FIRESTORE QUE CRIAMOS
+import com.sistemaestudos.db.fb.FBDatabase
+import com.sistemaestudos.db.fb.FBUser
+
 class RegisterActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -60,11 +64,31 @@ fun RegisterPage(modifier: Modifier = Modifier) {
                     FirebaseAuth.getInstance().createUserWithEmailAndPassword(email, password)
                         .addOnCompleteListener(activity) { task ->
                             if (task.isSuccessful) {
-                                Toast.makeText(
-                                    activity,
-                                    "Registro OK!",
-                                    Toast.LENGTH_LONG
-                                ).show()
+
+                                val novoUsuario = FBUser().apply {
+                                    this.name = username
+                                    this.email = email
+                                }
+
+                                try {
+                                    FBDatabase().register(novoUsuario)
+
+                                    Toast.makeText(
+                                        activity,
+                                        "Registro OK e salvo no Banco!",
+                                        Toast.LENGTH_LONG
+                                    ).show()
+
+                                    activity.finish()
+
+                                } catch (e: Exception) {
+                                    Toast.makeText(
+                                        activity,
+                                        "Erro ao salvar no banco: ${e.message}",
+                                        Toast.LENGTH_LONG
+                                    ).show()
+                                }
+
                             } else {
                                 Toast.makeText(
                                     activity,

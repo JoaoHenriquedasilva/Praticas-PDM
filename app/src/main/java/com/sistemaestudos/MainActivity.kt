@@ -28,9 +28,17 @@ import androidx.compose.runtime.setValue
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.sistemaestudos.ui.nav.Route
+// NOVOS IMPORTS NECESSÁRIOS
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.sistemaestudos.db.fb.FBDatabase
 
 class MainActivity : ComponentActivity() {
-    private val viewModel: MainViewModel by viewModels()
+
+    private val db = FBDatabase()
+
+    private val viewModel: MainViewModel by viewModels {
+        MainViewModelFactory(db)
+    }
 
     @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -41,6 +49,7 @@ class MainActivity : ComponentActivity() {
             var showDialog by remember { mutableStateOf(false) }
             val currentRoute = navController.currentBackStackEntryAsState()
             val showButton = currentRoute.value?.destination?.hasRoute(Route.List::class) == true
+            val fbUser by viewModel.user.collectAsStateWithLifecycle()
 
             val launcher = rememberLauncherForActivityResult(
                 contract = ActivityResultContracts.RequestPermission(),
@@ -57,10 +66,10 @@ class MainActivity : ComponentActivity() {
                     topBar = {
                         TopAppBar(
                             title = {
-                                val name = viewModel.user?.name?:"[carregando...]"
+                                val name = fbUser?.name ?: "[carregando...]"
                                 Text("Bem-vindo/a! $name")
                             },
-                                    actions = {
+                            actions = {
                                 IconButton(
                                     onClick = {
                                         com.google.firebase.auth.FirebaseAuth.getInstance().signOut()

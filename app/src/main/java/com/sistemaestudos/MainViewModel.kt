@@ -1,54 +1,102 @@
 package com.sistemaestudos
 
 import androidx.compose.runtime.mutableStateListOf
-import androidx.compose.runtime.mutableStateMapOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.toMutableStateList
 import androidx.lifecycle.ViewModel
-import com.google.android.gms.maps.model.LatLng
+import androidx.lifecycle.ViewModelProvider
+import com.sistemaestudos.db.fb.FBCity
+import com.sistemaestudos.db.fb.FBDatabase
+import com.sistemaestudos.db.fb.FBUser
+import com.sistemaestudos.db.fb.toFBCity
 import com.sistemaestudos.model.City
-import com.sistemaestudos.model.User
+import com.google.android.gms.maps.model.LatLng
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 
-class MainViewModel : ViewModel() {
-    private val _cities = getCities().toMutableStateList()
-    val cities: List<City>
-        get() = _cities
+class MainViewModel(private val db: FBDatabase) : ViewModel(), FBDatabase.Listener {
 
-    private val _user = mutableStateOf<User?> (null)
-    val user : User?
-        get() = _user.value
+    private val _user = MutableStateFlow<FBUser?>(null)
+    val user: StateFlow<FBUser?> = _user.asStateFlow()
+
+    val cities = mutableStateListOf<FBCity>()
+
+    init {
+        db.setListener(this)
+    }
+
+    override fun onUserLoaded(user: FBUser) {
+        _user.value = user
+    }
+
+    override fun onUserSignOut() {
+        _user.value = null
+        cities.clear()
+    }
+
+    override fun onCityAdded(city: FBCity) {
+        cities.add(city)
+    }
+
+    override fun onCityUpdated(city: FBCity) {
+        val index = cities.indexOfFirst { it.name == city.name }
+        if (index >= 0) {
+            cities[index] = city
+        }
+    }
+
+    override fun onCityRemoved(city: FBCity) {
+        cities.removeIf { it.name == city.name }
+    }
 
     fun remove(city: City) {
-        _cities.remove(city)
+        db.remove(city.toFBCity())
     }
+
     fun add(name: String) {
         if (name.contains("@") && name.contains(":")) {
             try {
-
                 val partes = name.split("@")
                 val coordenadas = partes[1].split(":")
                 val lat = coordenadas[0].toDouble()
                 val lng = coordenadas[1].toDouble()
 
-                val novaCidade = City(
-                    name = "Ponto Marcado #${_cities.size + 1}",
-                    location = LatLng(lat, lng),
-                    weather = "Carregando..."
-                )
-                _cities.add(novaCidade)
+                val novaCidade = FBCity().apply {
+                    this.name = "Ponto Marcado #${cities.size + 1}"
+                    this.lat = lat
+                    this.lng = lng
+                }
+                db.add(novaCidade)
             } catch (e: Exception) {
-                _cities.add(City(name = name, weather = "Carregando..."))
+                val novaCidadeErro = FBCity().apply { this.name = name }
+                db.add(novaCidadeErro)
             }
         } else {
-            _cities.add(City(name = name, weather = "Carregando..."))
+            val novaCidadeNormal = FBCity().apply { this.name = name }
+            db.add(novaCidadeNormal)
         }
     }
 
     fun add(name: String, location: LatLng? = null) {
-        _cities.add(City(name = name, location = location, weather = "Carregando..."))
+        val novaCidadeComLoc = FBCity().apply {
+            this.name = name
+            this.lat = location?.latitude
+            this.lng = location?.longitude
+        }
+        db.add(novaCidadeComLoc)
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        db.setListener(null)
     }
 }
 
-private fun getCities() = List(20) { i ->
-    City(name = "Cidade $i", weather = "Carregando clima...")
+class MainViewModelFactory(private val db: FBDatabase) : ViewModelProvider.Factory {
+    override fun <T : ViewModel> create(modelClass: Class<T>): T {
+        if (modelClass.isAssignableFrom(MainViewModel::class.java)) {
+            @Suppress("UNCHECKED_CAST")
+            return MainViewModel(db) as T
+        }
+        throw IllegalArgumentException("Unknown ViewModel class")
+    }
 }
