@@ -18,7 +18,6 @@ import com.sistemaestudos.ui.nav.BottomNavBar
 import com.sistemaestudos.ui.nav.BottomNavItem
 import com.sistemaestudos.ui.nav.MainNavHost
 import com.sistemaestudos.ui.theme.SistemaestudosTheme
-import androidx.activity.viewModels
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -28,23 +27,25 @@ import androidx.compose.runtime.setValue
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.sistemaestudos.ui.nav.Route
-// NOVOS IMPORTS NECESSÁRIOS
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.sistemaestudos.db.fb.FBDatabase
+import com.sistemaestudos.api.WeatherService
 
 class MainActivity : ComponentActivity() {
-
-    private val db = FBDatabase()
-
-    private val viewModel: MainViewModel by viewModels {
-        MainViewModelFactory(db)
-    }
 
     @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
+
+            val fbDB = remember { FBDatabase() }
+            val weatherService = remember { WeatherService() }
+            val viewModel: MainViewModel = viewModel(
+                factory = MainViewModelFactory(fbDB, weatherService)
+            )
+
             val navController = rememberNavController()
             var showDialog by remember { mutableStateOf(false) }
             val currentRoute = navController.currentBackStackEntryAsState()
@@ -55,12 +56,14 @@ class MainActivity : ComponentActivity() {
                 contract = ActivityResultContracts.RequestPermission(),
                 onResult = { isGranted -> }
             )
+
             if (showDialog) CityDialog(
                 onDismiss = { showDialog = false },
                 onConfirm = { city ->
                     if (city.isNotBlank()) viewModel.add(city)
                     showDialog = false
                 })
+
             SistemaestudosTheme {
                 Scaffold(
                     topBar = {

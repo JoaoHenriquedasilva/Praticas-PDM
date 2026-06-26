@@ -12,8 +12,12 @@ import com.google.android.gms.maps.model.LatLng
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import com.sistemaestudos.api.WeatherService
 
-class MainViewModel(private val db: FBDatabase) : ViewModel(), FBDatabase.Listener {
+class MainViewModel(
+    private val db: FBDatabase,
+    private val service: WeatherService
+) : ViewModel(), FBDatabase.Listener {
 
     private val _user = MutableStateFlow<FBUser?>(null)
     val user: StateFlow<FBUser?> = _user.asStateFlow()
@@ -53,36 +57,29 @@ class MainViewModel(private val db: FBDatabase) : ViewModel(), FBDatabase.Listen
     }
 
     fun add(name: String) {
-        if (name.contains("@") && name.contains(":")) {
-            try {
-                val partes = name.split("@")
-                val coordenadas = partes[1].split(":")
-                val lat = coordenadas[0].toDouble()
-                val lng = coordenadas[1].toDouble()
-
+        service.getLocation(name) { lat, lng ->
+            if (lat != null && lng != null) {
                 val novaCidade = FBCity().apply {
-                    this.name = "Ponto Marcado #${cities.size + 1}"
+                    this.name = name
                     this.lat = lat
                     this.lng = lng
                 }
                 db.add(novaCidade)
-            } catch (e: Exception) {
-                val novaCidadeErro = FBCity().apply { this.name = name }
-                db.add(novaCidadeErro)
             }
-        } else {
-            val novaCidadeNormal = FBCity().apply { this.name = name }
-            db.add(novaCidadeNormal)
         }
     }
 
-    fun add(name: String, location: LatLng? = null) {
-        val novaCidadeComLoc = FBCity().apply {
-            this.name = name
-            this.lat = location?.latitude
-            this.lng = location?.longitude
+    fun add(location: LatLng) {
+        service.getName(location.latitude, location.longitude) { name ->
+            if (name != null) {
+                val novaCidadeComLoc = FBCity().apply {
+                    this.name = name
+                    this.lat = location.latitude
+                    this.lng = location.longitude
+                }
+                db.add(novaCidadeComLoc)
+            }
         }
-        db.add(novaCidadeComLoc)
     }
 
     override fun onCleared() {
@@ -91,11 +88,14 @@ class MainViewModel(private val db: FBDatabase) : ViewModel(), FBDatabase.Listen
     }
 }
 
-class MainViewModelFactory(private val db: FBDatabase) : ViewModelProvider.Factory {
+class MainViewModelFactory(
+    private val db: FBDatabase,
+    private val service: WeatherService
+) : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(MainViewModel::class.java)) {
             @Suppress("UNCHECKED_CAST")
-            return MainViewModel(db) as T
+            return MainViewModel(db, service) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")
     }
