@@ -86,6 +86,21 @@ class MainViewModel(
         super.onCleared()
         db.setListener(null)
     }
+    fun addCity(name: String) {
+        service.getLocation(name) { lat, lng ->
+            if (lat != null && lng != null) {
+                db.add(City(name=name, location=LatLng(lat, lng)).toFBCity())
+            }
+        }
+    }
+    fun addCity(location: LatLng) {
+        service.getName(location.latitude, location.longitude) { name ->
+            if (name != null) {
+                db.add(City(name = name, location = location).toFBCity())
+            }
+        }
+    }
+
 }
 
 class MainViewModelFactory(

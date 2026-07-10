@@ -60,7 +60,7 @@ class MainActivity : ComponentActivity() {
             if (showDialog) CityDialog(
                 onDismiss = { showDialog = false },
                 onConfirm = { city ->
-                    if (city.isNotBlank()) viewModel.add(city)
+                    if (city.isNotBlank()) viewModel.addCity(city)
                     showDialog = false
                 })
 
