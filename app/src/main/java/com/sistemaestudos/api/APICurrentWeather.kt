@@ -7,11 +7,12 @@ data class APICurrentWeather(
     var current: APIWeather? = null
 )
 
-fun APICurrentWeather.toWeather(): Weather {
+// Função de extensão para converter APIWeather em Weather
+fun APIWeather.toWeather(): Weather {
     return Weather(
-        date = current?.last_updated ?: "...",
-        desc = current?.condition?.text ?: "...",
-        temp = current?.temp_c ?: -1.0,
-        imgUrl = "https:" + (current?.condition?.icon ?: "")
+        date = this.last_updated ?: "...",
+        desc = this.condition?.text ?: "...",
+        temp = this.temp_c?.toString() ?: "--",
+        imgUrl = "https:" + (this.condition?.icon ?: "")
     )
 }

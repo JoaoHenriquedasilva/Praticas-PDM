@@ -1,67 +1,117 @@
 package com.sistemaestudos.api
 
-import android.util.Log
+import android.content.Context
+import android.graphics.Bitmap
+import android.graphics.drawable.BitmapDrawable
+import coil.ImageLoader
+import coil.request.ImageRequest
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 
-class WeatherService {
-    private var weatherAPI: WeatherServiceAPI
+// PASSO 1: Recebe o Context do Android no construtor
+class WeatherService(private val context: Context) {
+
+    private val weatherAPI: WeatherServiceAPI
+
+    // PASSO 1: ImageLoader do Coil configurado com allowHardware(false)
+    private val imageLoader = ImageLoader.Builder(context)
+        .allowHardware(false)
+        .build()
 
     init {
-        val retrofitAPI = Retrofit.Builder()
+        val retrofit = Retrofit.Builder()
             .baseUrl(WeatherServiceAPI.BASE_URL)
             .addConverterFactory(GsonConverterFactory.create())
             .build()
 
-        weatherAPI = retrofitAPI.create(WeatherServiceAPI::class.java)
+        weatherAPI = retrofit.create(WeatherServiceAPI::class.java)
+    }
+
+    fun getLocation(name: String, onResponse: (Double?, Double?) -> Unit) {
+        weatherAPI.getLocation(name).enqueue(object : Callback<List<APILocation>> {
+            override fun onResponse(call: Call<List<APILocation>>, response: Response<List<APILocation>>) {
+                if (response.isSuccessful) {
+                    val location = response.body()?.firstOrNull()
+                    onResponse(location?.lat, location?.lon)
+                } else {
+                    onResponse(null, null)
+                }
+            }
+
+            override fun onFailure(call: Call<List<APILocation>>, t: Throwable) {
+                onResponse(null, null)
+            }
+        })
     }
 
     fun getName(lat: Double, lng: Double, onResponse: (String?) -> Unit) {
-        search("$lat,$lng") { loc -> onResponse(loc?.name) }
-    }
-
-    fun getLocation(name: String, onResponse: (lat: Double?, long: Double?) -> Unit) {
-        search(name) { loc -> onResponse(loc?.lat, loc?.lon) }
-    }
-
-    private fun search(query: String, onResponse: (APILocation?) -> Unit) {
-        val call: Call<List<APILocation>?> = weatherAPI.search(query)
-
-        call.enqueue(object : Callback<List<APILocation>?> {
-            override fun onResponse(
-                call: Call<List<APILocation>?>,
-                response: Response<List<APILocation>?>
-            ) {
-                onResponse(response.body()?.let { if (it.isNotEmpty()) it[0] else null })
+        weatherAPI.getName("$lat,$lng").enqueue(object : Callback<List<APILocation>> {
+            override fun onResponse(call: Call<List<APILocation>>, response: Response<List<APILocation>>) {
+                if (response.isSuccessful) {
+                    val location = response.body()?.firstOrNull()
+                    onResponse(location?.name)
+                } else {
+                    onResponse(null)
+                }
             }
 
-            override fun onFailure(call: Call<List<APILocation>?>, t: Throwable) {
-                Log.w("WeatherApp WARNING", "" + t.message)
+            override fun onFailure(call: Call<List<APILocation>>, t: Throwable) {
                 onResponse(null)
             }
         })
     }
-    private fun <T> enqueue(call : Call<T?>, onResponse : ((T?) -> Unit)? = null){
-        call.enqueue(object : Callback<T?> {
-            override fun onResponse(call: Call<T?>, response: Response<T?>) {
-                val obj: T? = response.body()
-                onResponse?.invoke(obj)
+
+    fun getWeather(name: String, onResponse: (APIWeather?) -> Unit) {
+        weatherAPI.getWeather(name).enqueue(object : Callback<APIWeather> {
+            override fun onResponse(call: Call<APIWeather>, response: Response<APIWeather>) {
+                if (response.isSuccessful) {
+                    onResponse(response.body())
+                } else {
+                    onResponse(null)
+                }
             }
-            override fun onFailure(call: Call<T?>, t: Throwable) {
-                Log.w("WeatherApp WARNING", "" + t.message)
+
+            override fun onFailure(call: Call<APIWeather>, t: Throwable) {
+                onResponse(null)
             }
         })
     }
-    fun getWeather(name: String, onResponse: (APICurrentWeather?) -> Unit){
-        val call: Call<APICurrentWeather?> = weatherAPI.weather(name)
-        enqueue(call) { onResponse.invoke(it) }
-    }
-    fun getForecast(name: String, onResponse : (APIWeatherForecast?) -> Unit) {
-        val call: Call<APIWeatherForecast?> = weatherAPI.forecast(name)
-        enqueue(call) { onResponse.invoke(it) }
+
+    fun getForecast(name: String, onResponse: (APIWeatherForecast?) -> Unit) {
+        weatherAPI.getForecast(name).enqueue(object : Callback<APIWeatherForecast> {
+            override fun onResponse(call: Call<APIWeatherForecast>, response: Response<APIWeatherForecast>) {
+                if (response.isSuccessful) {
+                    onResponse(response.body())
+                } else {
+                    onResponse(null)
+                }
+            }
+
+            override fun onFailure(call: Call<APIWeatherForecast>, t: Throwable) {
+                onResponse(null)
+            }
+        })
     }
 
+    // PASSO 1 (Parte 2): Baixa a imagem da URL e converte para Bitmap via Coil
+    fun getBitmap(imgUrl: String, onResponse: (Bitmap?) -> Unit) {
+        val request = ImageRequest.Builder(context)
+            .data(imgUrl)
+            .allowHardware(false)
+            .target(
+                onSuccess = { drawable ->
+                    val bitmap = (drawable as BitmapDrawable).bitmap
+                    onResponse(bitmap)
+                },
+                onError = {
+                    onResponse(null)
+                }
+            )
+            .build()
+
+        imageLoader.enqueue(request)
+    }
 }
