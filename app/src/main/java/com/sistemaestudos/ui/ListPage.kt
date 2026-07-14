@@ -1,7 +1,6 @@
 package com.sistemaestudos.ui
 
 import android.app.Activity
-import android.widget.Toast
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -11,6 +10,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.rounded.FavoriteBorder
@@ -20,65 +20,68 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.foundation.lazy.items
-import androidx.compose.ui.platform.LocalContext
 import com.sistemaestudos.MainViewModel
-// IMPORTANTE: Importar a classe FBCity correta
-import com.sistemaestudos.db.fb.FBCity
+import com.sistemaestudos.model.City
+import com.sistemaestudos.model.Weather
 
 @Composable
 fun ListPage(
     modifier: Modifier = Modifier,
     viewModel: MainViewModel
 ) {
+    val activity = LocalContext.current as? Activity
     val cityList = viewModel.cities
 
-    val activity = LocalContext.current as Activity
-
     LazyColumn(
-        modifier = modifier.fillMaxSize().padding(all = 8.dp)
+        modifier = modifier.fillMaxSize().padding(8.dp)
     ) {
-        items(cityList, key = { it.name ?: "" }) { fbCity ->
+        items(items = cityList, key = { it.name }) { city ->
             CityItem(
-                fbCity = fbCity,
-                onClose = {
-                    Toast.makeText(activity, "Fechando ${fbCity.name}", Toast.LENGTH_SHORT).show()
-                    val cityModel = fbCity.toCity()
-                    viewModel.remove(cityModel)
-                },
-                onClick = {
-                    Toast.makeText(activity, "Clicou em ${fbCity.name}", Toast.LENGTH_SHORT).show()
-                }
+                city = city,
+                weather = viewModel.weather(city.name),
+                onClose = { viewModel.remove(city) },
+                onClick = { /* Deixe como estava por enquanto conforme a nota do PDF */ }
             )
         }
     }
 }
-
 @Composable
 fun CityItem(
-    fbCity: FBCity,
+    city: City,
+    weather: Weather,
     onClick: () -> Unit,
     onClose: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    // Passo 11: Se o clima ainda estiver carregando, mostra "Carregando clima..."
+    val desc = if (weather == Weather.LOADING) "Carregando clima..." else weather.desc
+
     Row(
-        modifier = modifier.fillMaxWidth().padding(8.dp).clickable { onClick() },
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(8.dp)
+            .clickable { onClick() },
         verticalAlignment = Alignment.CenterVertically
     ) {
         Icon(
-            Icons.Rounded.FavoriteBorder,
-            contentDescription = ""
+            imageVector = Icons.Rounded.FavoriteBorder,
+            contentDescription = null
         )
         Spacer(modifier = Modifier.size(12.dp))
-        Column(modifier = Modifier.weight(1f)) {
+        Column(
+            modifier = Modifier.weight(1f)
+        ) {
             Text(
-                text = fbCity.name ?: "Cidade Sem Nome",
+                modifier = Modifier,
+                text = city.name,
                 fontSize = 24.sp
             )
             Text(
-                text = "Carregando clima...",
+                modifier = Modifier,
+                text = desc,
                 fontSize = 16.sp
             )
         }
