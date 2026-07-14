@@ -18,6 +18,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import com.sistemaestudos.api.WeatherService
 import com.sistemaestudos.api.toWeather
 import com.sistemaestudos.api.toForecast
+import com.sistemaestudos.ui.nav.Route
 
 class MainViewModel(
     private val db: FBDatabase,
@@ -42,6 +43,10 @@ class MainViewModel(
     var city: String?
         get() = _city.value
         set(tmp) { _city.value = tmp }
+    private var _page = mutableStateOf<Route>(Route.Home)
+    var page: Route
+        get() = _page.value
+        set(tmp) { _page.value = tmp }
 
     init {
         db.setListener(this)

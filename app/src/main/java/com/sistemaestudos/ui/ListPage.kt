@@ -26,6 +26,7 @@ import androidx.compose.ui.unit.sp
 import com.sistemaestudos.MainViewModel
 import com.sistemaestudos.model.City
 import com.sistemaestudos.model.Weather
+import com.sistemaestudos.ui.nav.Route
 
 @Composable
 fun ListPage(
@@ -43,8 +44,8 @@ fun ListPage(
                 city = city,
                 weather = viewModel.weather(city.name),
                 onClick = {
-                    // PASSO 10: Define a cidade selecionada no ViewModel
                     viewModel.city = city.name
+                    viewModel.page = Route.Home
                 },
                 onClose = {
                     viewModel.remove(city)

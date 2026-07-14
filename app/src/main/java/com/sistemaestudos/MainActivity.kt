@@ -12,25 +12,25 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.*
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavDestination.Companion.hasRoute
+import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.sistemaestudos.api.WeatherService
+import com.sistemaestudos.db.fb.FBDatabase
+import com.sistemaestudos.ui.CityDialog
 import com.sistemaestudos.ui.nav.BottomNavBar
 import com.sistemaestudos.ui.nav.BottomNavItem
 import com.sistemaestudos.ui.nav.MainNavHost
-import com.sistemaestudos.ui.theme.SistemaestudosTheme
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import com.sistemaestudos.ui.CityDialog
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
-import androidx.navigation.NavDestination.Companion.hasRoute
-import androidx.navigation.compose.currentBackStackEntryAsState
 import com.sistemaestudos.ui.nav.Route
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.compose.viewModel
-import com.sistemaestudos.db.fb.FBDatabase
-import com.sistemaestudos.api.WeatherService
+import com.sistemaestudos.ui.theme.SistemaestudosTheme
 
 class MainActivity : ComponentActivity() {
 
@@ -92,7 +92,12 @@ class MainActivity : ComponentActivity() {
                             BottomNavItem.ListButton,
                             BottomNavItem.MapButton,
                         )
-                        BottomNavBar(navController = navController, items = items)
+                        // PASSO 4: Passando o viewModel para o BottomNavBar
+                        BottomNavBar(
+                            viewModel = viewModel,
+                            navController = navController,
+                            items = items
+                        )
                     },
                     floatingActionButton = {
                         if (showButton) {
@@ -101,14 +106,27 @@ class MainActivity : ComponentActivity() {
                             }
                         }
                     }
-
                 ) { innerPadding ->
-                    Box(modifier = Modifier.padding(innerPadding)) {
-                        LaunchedEffect(Unit) {
-                            launcher.launch(android.Manifest.permission.ACCESS_FINE_LOCATION)
-                        }
+                    launcher.launch(android.Manifest.permission.ACCESS_FINE_LOCATION)
 
-                        MainNavHost(navController = navController, viewModel = viewModel)
+                    Box(modifier = Modifier.padding(innerPadding)) {
+                        MainNavHost(
+                            navController = navController,
+                            viewModel = viewModel
+                        )
+
+                        // PASSO 4: Escuta viewModel.page e faz a navegação
+                        LaunchedEffect(viewModel.page) {
+                            navController.navigate(viewModel.page) {
+                                navController.graph.startDestinationRoute?.let {
+                                    popUpTo(it) {
+                                        saveState = true
+                                    }
+                                }
+                                restoreState = true
+                                launchSingleTop = true
+                            }
+                        }
                     }
                 }
             }
