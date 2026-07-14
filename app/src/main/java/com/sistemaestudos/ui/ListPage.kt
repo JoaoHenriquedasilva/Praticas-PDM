@@ -27,6 +27,9 @@ import com.sistemaestudos.MainViewModel
 import com.sistemaestudos.model.City
 import com.sistemaestudos.model.Weather
 import com.sistemaestudos.ui.nav.Route
+import coil.compose.AsyncImage
+import androidx.compose.ui.res.painterResource
+import com.sistemaestudos.R
 
 @Composable
 fun ListPage(
@@ -62,7 +65,6 @@ fun CityItem(
     onClose: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    // Passo 11: Se o clima ainda estiver carregando, mostra "Carregando clima..."
     val desc = if (weather == Weather.LOADING) "Carregando clima..." else weather.desc
 
     Row(
@@ -72,9 +74,11 @@ fun CityItem(
             .clickable { onClick() },
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Icon(
-            imageVector = Icons.Rounded.FavoriteBorder,
-            contentDescription = null
+        AsyncImage(
+            model = weather.imgUrl,
+            modifier = modifier.size(75.dp),
+            error = painterResource(id = R.drawable.loading),
+            contentDescription = "Imagem"
         )
         Spacer(modifier = Modifier.size(12.dp))
         Column(
