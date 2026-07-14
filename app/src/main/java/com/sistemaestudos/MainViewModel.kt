@@ -1,6 +1,7 @@
 package com.sistemaestudos
 
 import androidx.compose.runtime.mutableStateMapOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.sistemaestudos.db.fb.FBCity
@@ -9,12 +10,14 @@ import com.sistemaestudos.db.fb.FBUser
 import com.sistemaestudos.db.fb.toFBCity
 import com.sistemaestudos.model.City
 import com.sistemaestudos.model.Weather
+import com.sistemaestudos.model.Forecast
 import com.google.android.gms.maps.model.LatLng
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import com.sistemaestudos.api.WeatherService
 import com.sistemaestudos.api.toWeather
+import com.sistemaestudos.api.toForecast
 
 class MainViewModel(
     private val db: FBDatabase,
@@ -24,13 +27,21 @@ class MainViewModel(
     private val _user = MutableStateFlow<FBUser?>(null)
     val user: StateFlow<FBUser?> = _user.asStateFlow()
 
-    // PASSO 7: Declarando o Map e a propriedade calculada 'cities'
+    // Cidades do Firebase
     private val _cities = mutableStateMapOf<String, City>()
     val cities: List<City>
         get() = _cities.values.toList().sortedBy { it.name }
 
-    // PASSO 7: Declarando o Map de Clima
+    // Clima atual
     private val _weather = mutableStateMapOf<String, Weather>()
+
+    // Passo 5: Previsão do tempo para 10 dias
+    private val _forecast = mutableStateMapOf<String, List<Forecast>?>()
+
+    private var _city = mutableStateOf<String?>(null)
+    var city: String?
+        get() = _city.value
+        set(tmp) { _city.value = tmp }
 
     init {
         db.setListener(this)
@@ -44,9 +55,9 @@ class MainViewModel(
         _user.value = null
         _cities.clear()
         _weather.clear()
+        _forecast.clear()
     }
 
-    // PASSO 7: Tratadores ajustados conforme a imagem do PDF
     override fun onCityAdded(city: FBCity) {
         _cities[city.name!!] = city.toCity()
     }
@@ -58,6 +69,8 @@ class MainViewModel(
 
     override fun onCityRemoved(city: FBCity) {
         _cities.remove(city.name)
+        _weather.remove(city.name)
+        _forecast.remove(city.name)
     }
 
     fun remove(city: City) {
@@ -80,14 +93,12 @@ class MainViewModel(
         }
     }
 
-    override fun onCleared() {
-        super.onCleared()
-        db.setListener(null)
-    }
+    // Parte 1: Clima atual
     fun weather(name: String) = _weather.getOrPut(name) {
         loadWeather(name)
         Weather.LOADING
     }
+
     private fun loadWeather(name: String) {
         service.getWeather(name) { apiWeather ->
             apiWeather?.let {
@@ -96,6 +107,23 @@ class MainViewModel(
         }
     }
 
+    fun forecast(name: String) = _forecast.getOrPut(name) {
+        loadForecast(name)
+        emptyList() // return
+    }
+
+    private fun loadForecast(name: String) {
+        service.getForecast(name) { apiForecast ->
+            apiForecast?.toForecast()?.let {
+                _forecast[name] = it
+            }
+        }
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        db.setListener(null)
+    }
 }
 
 class MainViewModelFactory(

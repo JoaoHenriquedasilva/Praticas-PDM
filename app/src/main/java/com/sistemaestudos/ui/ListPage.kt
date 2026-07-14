@@ -42,8 +42,13 @@ fun ListPage(
             CityItem(
                 city = city,
                 weather = viewModel.weather(city.name),
-                onClose = { viewModel.remove(city) },
-                onClick = { /* Deixe como estava por enquanto conforme a nota do PDF */ }
+                onClick = {
+                    // PASSO 10: Define a cidade selecionada no ViewModel
+                    viewModel.city = city.name
+                },
+                onClose = {
+                    viewModel.remove(city)
+                }
             )
         }
     }
