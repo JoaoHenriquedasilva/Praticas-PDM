@@ -1,6 +1,6 @@
 package com.sistemaestudos.ui
 
-import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -30,13 +30,16 @@ fun MapPage(
         position = CameraPosition.fromLatLngZoom(recife, 10f)
     }
 
-    Column(modifier = modifier.fillMaxSize()) {
+    Box(modifier = modifier.fillMaxSize()) {
         GoogleMap(
             modifier = Modifier.fillMaxSize(),
-            cameraPositionState = cameraPositionState
+            cameraPositionState = cameraPositionState,
+            // 💡 AQUI ESTÁ O SEGREDO: Clique no mapa adiciona a cidade via geocoding!
+            onMapClick = { latLng ->
+                viewModel.addCity(latLng)
+            }
         ) {
             viewModel.cities.forEach { city ->
-                // Atribui a uma variável local 'location' para garantir o smart cast seguro
                 val location = city.location
                 if (location != null) {
                     val weather = viewModel.weather(city.name)

@@ -48,6 +48,14 @@ class FBDatabase {
     }
     fun setListener(listener: Listener? = null) {
         this.listener = listener
+        if (listener != null && auth.currentUser != null) {
+            val uid = auth.currentUser!!.uid
+            db.collection("users").document(uid).get().addOnSuccessListener {
+                it.toObject(FBUser::class.java)?.let { user ->
+                    this.listener?.onUserLoaded(user)
+                }
+            }
+        }
     }
     fun register(user: FBUser) {
         if (auth.currentUser == null)

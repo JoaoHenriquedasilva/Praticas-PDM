@@ -65,16 +65,16 @@ class WeatherService(private val context: Context) {
     }
 
     fun getWeather(name: String, onResponse: (APIWeather?) -> Unit) {
-        weatherAPI.getWeather(name).enqueue(object : Callback<APIWeather> {
-            override fun onResponse(call: Call<APIWeather>, response: Response<APIWeather>) {
+        weatherAPI.getWeather(name).enqueue(object : Callback<APICurrentWeather> {
+            override fun onResponse(call: Call<APICurrentWeather>, response: Response<APICurrentWeather>) {
                 if (response.isSuccessful) {
-                    onResponse(response.body())
+                    onResponse(response.body()?.current)
                 } else {
                     onResponse(null)
                 }
             }
 
-            override fun onFailure(call: Call<APIWeather>, t: Throwable) {
+            override fun onFailure(call: Call<APICurrentWeather>, t: Throwable) {
                 onResponse(null)
             }
         })
