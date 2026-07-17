@@ -31,6 +31,10 @@ import com.sistemaestudos.ui.nav.BottomNavItem
 import com.sistemaestudos.ui.nav.MainNavHost
 import com.sistemaestudos.ui.nav.Route
 import com.sistemaestudos.ui.theme.SistemaestudosTheme
+import com.sistemaestudos.monitor.ForecastMonitor
+import android.content.Intent
+import androidx.compose.runtime.DisposableEffect
+import androidx.core.util.Consumer
 
 class MainActivity : ComponentActivity() {
 
@@ -38,13 +42,25 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+
+        val monitor = ForecastMonitor(this)
+
         setContent {
 
             val fbDB = remember { FBDatabase() }
             val weatherService = remember { WeatherService(this) }
             val viewModel: MainViewModel = viewModel(
-                factory = MainViewModelFactory(fbDB, weatherService)
+                factory = MainViewModelFactory(fbDB, weatherService, monitor)
             )
+
+            DisposableEffect(Unit) {
+                val listener = Consumer<Intent> { intent ->
+                    viewModel.city = intent.getStringExtra("city")
+                    viewModel.page = Route.Home
+                }
+                addOnNewIntentListener(listener)
+                onDispose { removeOnNewIntentListener(listener) }
+            }
 
             val navController = rememberNavController()
             var showDialog by remember { mutableStateOf(false) }

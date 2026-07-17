@@ -19,10 +19,12 @@ import com.sistemaestudos.api.WeatherService
 import com.sistemaestudos.api.toWeather
 import com.sistemaestudos.api.toForecast
 import com.sistemaestudos.ui.nav.Route
+import com.sistemaestudos.monitor.ForecastMonitor
 
 class MainViewModel(
     private val db: FBDatabase,
-    private val service: WeatherService
+    private val service: WeatherService,
+    private val monitor: ForecastMonitor
 ) : ViewModel(), FBDatabase.Listener {
 
     private val _user = MutableStateFlow<FBUser?>(null)
@@ -61,21 +63,25 @@ class MainViewModel(
         _cities.clear()
         _weather.clear()
         _forecast.clear()
+        monitor.cancelAll()
     }
 
     override fun onCityAdded(city: FBCity) {
         _cities[city.name!!] = city.toCity()
+        monitor.updateCity(city.toCity())
     }
 
     override fun onCityUpdated(city: FBCity) {
-        _cities.remove(city.name)
+        _cities.remove(key = city.name)
         _cities[city.name!!] = city.toCity()
+        monitor.updateCity(city.toCity())
     }
 
     override fun onCityRemoved(city: FBCity) {
-        _cities.remove(city.name)
-        _weather.remove(city.name)
-        _forecast.remove(city.name)
+        _cities.remove(key = city.name)
+        _weather.remove(key = city.name)
+        _forecast.remove(key = city.name)
+        monitor.cancelCity(city.toCity())
     }
 
     fun remove(city: City) {
@@ -146,12 +152,13 @@ class MainViewModel(
 
 class MainViewModelFactory(
     private val db: FBDatabase,
-    private val service: WeatherService
+    private val service: WeatherService,
+    private val monitor: ForecastMonitor
 ) : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(MainViewModel::class.java)) {
             @Suppress("UNCHECKED_CAST")
-            return MainViewModel(db, service) as T
+            return MainViewModel(db, service, monitor) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")
     }
