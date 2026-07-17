@@ -13,23 +13,25 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.rounded.FavoriteBorder
+import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.compose.AsyncImage
 import com.sistemaestudos.MainViewModel
+import com.sistemaestudos.R
 import com.sistemaestudos.model.City
 import com.sistemaestudos.model.Weather
 import com.sistemaestudos.ui.nav.Route
-import coil.compose.AsyncImage
-import androidx.compose.ui.res.painterResource
-import com.sistemaestudos.R
 
 @Composable
 fun ListPage(
@@ -57,6 +59,7 @@ fun ListPage(
         }
     }
 }
+
 @Composable
 fun CityItem(
     city: City,
@@ -66,6 +69,12 @@ fun CityItem(
     modifier: Modifier = Modifier
 ) {
     val desc = if (weather == Weather.LOADING) "Carregando clima..." else weather.desc
+
+    val icon = if (city.isMonitored) {
+        Icons.Filled.Notifications
+    } else {
+        Icons.Outlined.Notifications
+    }
 
     Row(
         modifier = modifier
@@ -81,14 +90,23 @@ fun CityItem(
             contentDescription = "Imagem"
         )
         Spacer(modifier = Modifier.size(12.dp))
+
         Column(
             modifier = Modifier.weight(1f)
         ) {
-            Text(
-                modifier = Modifier,
-                text = city.name,
-                fontSize = 24.sp
-            )
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = city.name,
+                    fontSize = 24.sp
+                )
+                Spacer(modifier = Modifier.size(8.dp))
+                Icon(
+                    imageVector = icon,
+                    contentDescription = "Monitorada",
+                    modifier = Modifier.size(20.dp),
+                    tint = Color.Gray
+                )
+            }
             Text(
                 modifier = Modifier,
                 text = desc,

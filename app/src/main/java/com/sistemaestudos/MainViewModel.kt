@@ -135,7 +135,9 @@ class MainViewModel(
             }
         }
     }
-
+    fun update(city: City) {
+        db.update(city.toFBCity())
+    }
     override fun onCleared() {
         super.onCleared()
         db.setListener(null)
