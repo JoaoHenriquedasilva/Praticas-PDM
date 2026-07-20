@@ -4,11 +4,8 @@ import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
-import com.sistemaestudos.db.fb.FBCity
-import com.sistemaestudos.db.fb.FBDatabase
-import com.sistemaestudos.db.fb.FBUser
-import com.sistemaestudos.db.fb.toFBCity
 import com.sistemaestudos.model.City
+import com.sistemaestudos.model.User
 import com.sistemaestudos.model.Weather
 import com.sistemaestudos.model.Forecast
 import com.google.android.gms.maps.model.LatLng
@@ -20,25 +17,24 @@ import com.sistemaestudos.api.toWeather
 import com.sistemaestudos.api.toForecast
 import com.sistemaestudos.ui.nav.Route
 import com.sistemaestudos.monitor.ForecastMonitor
+import com.sistemaestudos.repo.Repository
 
 class MainViewModel(
-    private val db: FBDatabase,
+    private val repository: Repository,
     private val service: WeatherService,
     private val monitor: ForecastMonitor
-) : ViewModel(), FBDatabase.Listener {
+) : ViewModel(), Repository.Listener {
 
-    private val _user = MutableStateFlow<FBUser?>(null)
-    val user: StateFlow<FBUser?> = _user.asStateFlow()
+    // Alterado o tipo interno para o User da camada Model
+    private val _user = MutableStateFlow<User?>(null)
+    val user: StateFlow<User?> = _user.asStateFlow()
 
-    // Cidades do Firebase
     private val _cities = mutableStateMapOf<String, City>()
     val cities: List<City>
         get() = _cities.values.toList().sortedBy { it.name }
 
-    // Clima atual
     private val _weather = mutableStateMapOf<String, Weather>()
 
-    // Passo 5: Previsão do tempo para 10 dias
     private val _forecast = mutableStateMapOf<String, List<Forecast>?>()
 
     private var _city = mutableStateOf<String?>(null)
@@ -51,10 +47,10 @@ class MainViewModel(
         set(tmp) { _page.value = tmp }
 
     init {
-        db.setListener(this)
+        repository.setListener(this)
     }
 
-    override fun onUserLoaded(user: FBUser) {
+    override fun onUserLoaded(user: User) {
         _user.value = user
     }
 
@@ -66,32 +62,32 @@ class MainViewModel(
         monitor.cancelAll()
     }
 
-    override fun onCityAdded(city: FBCity) {
-        _cities[city.name!!] = city.toCity()
-        monitor.updateCity(city.toCity())
+    override fun onCityAdded(city: City) {
+        _cities[city.name!!] = city
+        monitor.updateCity(city)
     }
 
-    override fun onCityUpdated(city: FBCity) {
+    override fun onCityUpdated(city: City) {
         _cities.remove(key = city.name)
-        _cities[city.name!!] = city.toCity()
-        monitor.updateCity(city.toCity())
+        _cities[city.name!!] = city
+        monitor.updateCity(city)
     }
 
-    override fun onCityRemoved(city: FBCity) {
+    override fun onCityRemoved(city: City) {
         _cities.remove(key = city.name)
         _weather.remove(key = city.name)
         _forecast.remove(key = city.name)
-        monitor.cancelCity(city.toCity())
+        monitor.cancelCity(city)
     }
 
     fun remove(city: City) {
-        db.remove(city.toFBCity())
+        repository.remove(city)
     }
 
     fun addCity(name: String) {
         service.getLocation(name) { lat, lng ->
             if (lat != null && lng != null) {
-                db.add(City(name = name, location = LatLng(lat, lng)).toFBCity())
+                repository.add(City(name = name, location = LatLng(lat, lng)))
             }
         }
     }
@@ -99,12 +95,11 @@ class MainViewModel(
     fun addCity(location: LatLng) {
         service.getName(location.latitude, location.longitude) { name ->
             if (name != null) {
-                db.add(City(name = name, location = location).toFBCity())
+                repository.add(City(name = name, location = location))
             }
         }
     }
 
-    // Parte 1: Clima atual
     fun weather(name: String) = _weather.getOrPut(name) {
         loadWeather(name)
         Weather.LOADING
@@ -131,7 +126,7 @@ class MainViewModel(
 
     fun forecast(name: String) = _forecast.getOrPut(name) {
         loadForecast(name)
-        emptyList() // return
+        emptyList()
     }
 
     private fun loadForecast(name: String) {
@@ -141,24 +136,26 @@ class MainViewModel(
             }
         }
     }
+
     fun update(city: City) {
-        db.update(city.toFBCity())
+        repository.update(city)
     }
+
     override fun onCleared() {
         super.onCleared()
-        db.setListener(null)
+        repository.setListener(null)
     }
 }
 
 class MainViewModelFactory(
-    private val db: FBDatabase,
+    private val repository: Repository, // <-- Alterado aqui
     private val service: WeatherService,
     private val monitor: ForecastMonitor
 ) : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(MainViewModel::class.java)) {
             @Suppress("UNCHECKED_CAST")
-            return MainViewModel(db, service, monitor) as T
+            return MainViewModel(repository, service, monitor) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")
     }

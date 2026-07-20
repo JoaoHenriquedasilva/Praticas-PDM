@@ -35,6 +35,8 @@ import com.sistemaestudos.monitor.ForecastMonitor
 import android.content.Intent
 import androidx.compose.runtime.DisposableEffect
 import androidx.core.util.Consumer
+import com.sistemaestudos.db.local.LocalDatabase
+import com.sistemaestudos.repo.Repository
 
 class MainActivity : ComponentActivity() {
 
@@ -46,11 +48,12 @@ class MainActivity : ComponentActivity() {
         val monitor = ForecastMonitor(this)
 
         setContent {
-
             val fbDB = remember { FBDatabase() }
+            val localDB = remember { LocalDatabase(context = this, databaseName = "cidades_db") }
+            val repository = remember { Repository(fbDB, localDB) }
             val weatherService = remember { WeatherService(this) }
             val viewModel: MainViewModel = viewModel(
-                factory = MainViewModelFactory(fbDB, weatherService, monitor)
+                factory = MainViewModelFactory(repository, weatherService, monitor)
             )
 
             DisposableEffect(Unit) {
@@ -108,7 +111,6 @@ class MainActivity : ComponentActivity() {
                             BottomNavItem.ListButton,
                             BottomNavItem.MapButton,
                         )
-                        // PASSO 4: Passando o viewModel para o BottomNavBar
                         BottomNavBar(
                             viewModel = viewModel,
                             navController = navController,
@@ -131,7 +133,6 @@ class MainActivity : ComponentActivity() {
                             viewModel = viewModel
                         )
 
-                        // PASSO 4: Escuta viewModel.page e faz a navegação
                         LaunchedEffect(viewModel.page) {
                             navController.navigate(viewModel.page) {
                                 navController.graph.startDestinationRoute?.let {
